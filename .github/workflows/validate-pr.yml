@@ -22,48 +22,60 @@ jobs:
               per_page: 300
             });
 
-            const ALLOWED_EXT = /\.(pdf|docx|ipynb|md|txt)$/i;
+            const ALLOWED_EXT = /\.(pdf|docx|ipynb|md|txt|py|png|jpg|jpeg|zip|csv)$/i;
             const BAD_NAME = /(Новый документ|New Document|Untitled|Document\d)/i;
-            const SUBMISSIONS_PATH = /^module-\d+\/class_\d+\/submissions\/[^\/]+/;
+            // Accept BOTH class_N (underscore) and class-N (dash) so we don't reject
+            // students for a single character. We'll still warn so they fix it next time.
+            const SUBMISSIONS_PATH = /^module[-_]\d+\/class[-_]\d+\/(submissions\/)?[^\/]+/;
             const ALLOWED_OUTSIDE = /^(\.github|README\.md|LICENSE|\.gitignore)/;
 
             const errors = [];
+            const warnings = [];
+
             for (const f of files) {
               if (f.status === "removed") continue;
 
-              // Flag dash-folder usage
+              // Soft warning: dash instead of underscore (don't block)
               if (/^module-\d+\/class-\d+/.test(f.filename)) {
-                errors.push("❌ `" + f.filename + "` — uses `class-` (dash). Folder must be `class_` (underscore).");
-                continue;
+                warnings.push("⚠ `" + f.filename + "` — please use `class_N` (underscore) next time. Accepted for now.");
               }
 
-              // If under a module-* tree, must be in submissions/
-              if (f.filename.startsWith("module-") && !SUBMISSIONS_PATH.test(f.filename)) {
+              // If under a module-* or module_* tree, must be in a recognised submissions path
+              if (/^module[-_]\d+/.test(f.filename) && !SUBMISSIONS_PATH.test(f.filename)) {
                 errors.push("❌ `" + f.filename + "` — file is not inside `module-N/class_X/submissions/`. Move it there.");
                 continue;
               }
 
-              // Extension check
+              // Extension check (only for files in module tree)
               if (SUBMISSIONS_PATH.test(f.filename) && !ALLOWED_EXT.test(f.filename)) {
-                errors.push("❌ `" + f.filename + "` — format not allowed. Use `.pdf`, `.docx`, `.ipynb`, `.md`, or `.txt`.");
+                errors.push("❌ `" + f.filename + "` — format not allowed. Use `.pdf`, `.docx`, `.ipynb`, `.md`, `.txt`, `.py`, `.png`, `.jpg`, `.zip`, or `.csv`.");
               }
 
-              // Placeholder filename
+              // Placeholder filename — warn only, don't block
               if (SUBMISSIONS_PATH.test(f.filename) && BAD_NAME.test(f.filename)) {
-                errors.push("❌ `" + f.filename + "` — placeholder filename detected. Consider renaming to `<YourName>_Class<N>.<ext>` for clarity.");
+                warnings.push("⚠ `" + f.filename + "` — placeholder filename. Consider renaming to `<YourName>_Class<N>.<ext>`.");
               }
 
-              // Modifying existing files
+              // Modifying existing files — WARNING ONLY (students need to be able to update their work)
               if (f.status === "modified" || f.status === "changed" || f.status === "renamed") {
                 if (!ALLOWED_OUTSIDE.test(f.filename)) {
-                  errors.push("⚠ `" + f.filename + "` — you are **modifying** an existing file. Submissions should only **add** new files under your own path.");
+                  warnings.push("ℹ `" + f.filename + "` — updating an existing submission. That's fine.");
                 }
               }
             }
 
-            const body = errors.length === 0
-              ? "✅ **Submission check passed** — your PR looks clean. A mentor will review and merge."
-              : "## ❌ Submission check failed (" + errors.length + " issue" + (errors.length>1?"s":"") + ")\n\nFix these before asking for review:\n\n" + errors.map(e => "- " + e).join("\n") + "\n\nAfter you fix them, push new commits to this branch — the check re-runs automatically.";
+            let body;
+            if (errors.length === 0 && warnings.length === 0) {
+              body = "✅ **Submission check passed** — your PR looks clean. A mentor will review and merge.";
+            } else if (errors.length === 0) {
+              body = "✅ **Submission check passed** with " + warnings.length + " note" + (warnings.length>1?"s":"") + ":\n\n" + warnings.map(w => "- " + w).join("\n");
+            } else {
+              body = "## ❌ Submission check failed (" + errors.length + " issue" + (errors.length>1?"s":"") + ")\n\nFix these before asking for review:\n\n" + errors.map(e => "- " + e).join("\n");
+              if (warnings.length > 0) {
+                body += "\n\n### Notes\n\n" + warnings.map(w => "- " + w).join("\n");
+              }
+              body += "\n\nAfter you fix them, push new commits to this branch — the check re-runs automatically.";
+            }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
