@@ -1,0 +1,66 @@
+SCENARIO 4 — Cotton Crop Yield Prediction in Fergana Valley
+
+Business objective:
+Predict cotton yield per hectare 3 months before harvest to help with export contracts, pricing, and planning.
+
+Target variable:
+Cotton yield per hectare, measured in tons/hectare or kg/hectare.
+
+ML problem type:
+Supervised regression, because the model predicts a numerical value.
+
+Main data sources:
+1. Satellite imagery
+2. Weather data
+3. Soil data
+4. Farm yield records
+5. Irrigation data
+
+Important input features:
+1. NDVI — crop health and greenness
+2. EVI — vegetation index
+3. Rainfall — water availability
+4. Temperature — heat stress
+5. Soil moisture — plant water condition
+6. Soil type — affects water retention
+7. Irrigation frequency — important for cotton growth
+8. Planting date — affects final yield
+9. Fertilizer usage — affects crop productivity
+10. Previous year yield — shows farm history
+
+Evaluation metric:
+Use RMSE and MAE.
+RMSE shows large prediction errors.
+MAE shows average prediction error.
+
+Model testing:
+Use temporal split and spatial split.
+Temporal split: train on past years and test on a future year.
+Spatial split: train on some farms and test on farms the model has never seen.
+
+Ethical considerations:
+Wrong predictions can hurt farmers financially.
+Companies may offer unfair contracts if the model predicts low yield.
+The model should be advisory, not fully automatic.
+
+Human oversight:
+Agronomists and farm experts should review predictions, especially when:
+- prediction is very high or very low
+- weather is unusual
+- the farm is new
+- satellite data is incomplete
+- contracts or pricing decisions are affected
+
+Data availability in Uzbekistan:
+Satellite data is available.
+Weather and soil data may be available.
+Farm-level yield data may be hard to collect because it can be private or incomplete.
+
+Research links:
+1. NASA satellite/agriculture data: https://data.nasa.gov
+2. Google Earth Engine: https://earthengine.google.com
+3. Kaggle agriculture datasets: https://www.kaggle.com/datasets?tags=agriculture
+4. Cotton yield prediction research: https://scholar.google.com/scholar?q=cotton+yield+prediction+satellite
+
+Personal reflection:
+The hardest part was deciding what data is realistic to collect in Uzbekistan. Satellite data is easy to access, but farm-level yield data may be private or incomplete. This problem is regression because the model predicts cotton yield as a number. The model must be tested on future years and new farms. It should support human experts, not replace them.
